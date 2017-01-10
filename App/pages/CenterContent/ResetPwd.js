@@ -54,7 +54,7 @@ class Login extends Component {
                     <View style={{flex:1,alignItems:'center',justifyContent:'center'}}>
                        <Text style={{fontSize:18,color:'white',alignSelf:'center'}}>重置密码</Text>   
                     </View>
-                    <View style={{white:48,height:48}}/>  
+                    <View style={{width:48,height:48}}/>
                 </View>
                 <View style={{backgroundColor:'white',marginTop:13}}>
                     <View style={{flexDirection:'row',height:45,alignItems:'center'}}>
@@ -100,11 +100,11 @@ class Login extends Component {
                             placeholderTextColor="#aaaaaa"
                             underlineColorAndroid="transparent"
                             numberOfLines={1}
-                            ref={'username'}
+                            ref={'password'}
                             multiline={true}
                             autoFocus={true}
                             onChangeText={(text) => {
-                               username = text;
+                               password = text;
                             }}
                            />
                           <TouchableOpacity onPress={() => {this.buttonChangeState(0)}} style={{width:45,height:45,alignItems:'center',justifyContent:'center'}}>
@@ -137,7 +137,7 @@ class Login extends Component {
                                   style={{justifyContent:'center',marginTop:13,alignItems:'center'}}>
                     <Image source={require('../../imgs/logre/ic_login_btn.png')} 
                            style={{width:300,height:40,justifyContent:'center',alignItems:'center'}}>
-                          <Text style={{color:'white'}}>完成</Text>
+                          <Text style={{color:'white',backgroundColor:'rgba(1,1,1,0)'}}>完成</Text>
                     </Image>
                 </TouchableOpacity>
              </View>

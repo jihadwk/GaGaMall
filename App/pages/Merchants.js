@@ -11,6 +11,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ListView,
+  InteractionManager,
 } from 'react-native';
 
 import { NaviGoBack } from '../utils/CommonUtils';
@@ -18,6 +19,7 @@ import { toastShort } from '../utils/ToastUtil';
 import ShortLine from '../component/ShortLine';
 import {COMMENT_DATA} from '../common/VirtualData'
 import GridView from '../component/GridView';
+import Comment from  './Comment';
 
 var {height, width} = Dimensions.get('window');
 
@@ -27,6 +29,7 @@ class Merchants extends React.Component {
     this.buttonBackAction=this.buttonBackAction.bind(this);    
     this.buttonItemAction=this.buttonItemAction.bind(this);
     this.renderItem = this.renderItem.bind(this); 
+    this.renderHeaderContent = this.renderHeaderContent.bind(this);
     this.state={
         dataSource: new ListView.DataSource({
            rowHasChanged: (row1, row2) => row1 !== row2,
@@ -41,10 +44,7 @@ class Merchants extends React.Component {
   }
   buttonItemAction(position){
       const {navigator} = this.props;
-      if(position === 0){
-          //评价
-          toastShort('点击评价...');
-      }else if(position === 1){
+      if(position === 1){
           //收藏
           toastShort('点击收藏...');
       }else if(position === 2){
@@ -59,9 +59,14 @@ class Merchants extends React.Component {
       }else if(position === 5){
           //开始点餐
           toastShort('点击点餐...');
-      }else if(position === 6){
+      }else if(position === 6 || position ===0){
           //点击评论
-          toastShort('点击评论...'); 
+          InteractionManager.runAfterInteractions(() => {
+            navigator.push({
+              component: Comment,
+              name: 'Comment'
+            });
+          });
       }
   }
   //渲染商家基本信息布局
@@ -74,30 +79,30 @@ class Merchants extends React.Component {
                      <Image source={require('../imgs/store/merchants/ic_merchants_icon.png')} 
                             style={{width:68,height:68,borderRadius:34}}/>
                      <View style={{marginLeft:15}}>
-                           <Text style={{color:'white',fontSize:16}}>四川川二娃</Text>
-                           <Text style={{color:'white',fontSize:14,marginTop:5}}>川菜,中国菜</Text>
+                           <Text style={{color:'white',fontSize:16,backgroundColor:'rgba(1,1,1,0)'}}>四川川二娃</Text>
+                           <Text style={{color:'white',fontSize:14,marginTop:5,backgroundColor:'rgba(1,1,1,0)'}}>川菜,中国菜</Text>
                            <View style={{flexDirection:'row',alignItems:'center',marginTop:5}}>
                                  <Image source={require('../imgs/store/merchants/ic_merchants_comment.png')}
                                         style={{width:14,height:14}}
                                         />
-                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5}}>59条评论</Text>
+                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5,backgroundColor:'rgba(1,1,1,0)'}}>59条评论</Text>
                            </View>
                            <View style={{flexDirection:'row',marginTop:5,alignItems:'center'}}>
                                  <Image source={require('../imgs/store/merchants/ic_merchants_time.png')}
                                         style={{width:14,height:14}}
                                         />
-                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5}}>10:00am-12:00pm</Text>
+                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5,backgroundColor:'rgba(1,1,1,0)'}}>10:00am-12:00pm</Text>
                            </View>
                            <View style={{flexDirection:'row',marginTop:5,alignItems:'center'}}>
                                  <Image source={require('../imgs/store/merchants/ic_merchants_peisong.png')}
                                         style={{width:14,height:14}}
                                         />
-                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5}}>5km之内免费</Text>
+                                 <Text style={{color:'#eee',fontSize:13,marginLeft:5,backgroundColor:'rgba(1,1,1,0)'}}>5km之内免费</Text>
                            </View>
                      </View>
                 </View>
                 <View style={{flex:1,justifyContent:'flex-end'}}>
-                      <Text style={{color:'#fff',marginBottom:5,marginLeft:15,marginRight:15}}>公告信息:全场满200,八折畅享美食</Text>
+                      <Text style={{color:'#fff',marginBottom:5,marginLeft:15,marginRight:15,backgroundColor:'rgba(1,1,1,0)'}}>公告信息:全场满200,八折畅享美食</Text>
                 </View>
             </Image>
         </View>
@@ -178,19 +183,6 @@ class Merchants extends React.Component {
   renderBottomComment(){
      return (
        <View style={{flex:1}}>
-        <View style={{height:32,alignItems:'center',flexDirection:'row'}}>
-            <Text style={{marginLeft:10}}>评论信息</Text>
-            <View style={{flex:1,alignItems:'flex-end'}}>
-                  <TouchableOpacity onPress={()=>{this.buttonItemAction(6)}}>
-                       <View style={{flexDirection:'row',height:32,alignItems:'center'}}>
-                            <Text>添加评论</Text>
-                            <Image source={require('../imgs/ic_center_right_arrow.png')} 
-                                   style={{width:12,height:18,marginRight:15}}/>
-                       </View>
-                  </TouchableOpacity>
-            </View>     
-      </View>
-
       {this.renderContent(this.state.dataSource.cloneWithRows(
                          this.state.commentList === undefined ? [] : this.state.commentList))}
       </View>
@@ -207,6 +199,7 @@ class Merchants extends React.Component {
         onEndReachedThreshold={10}
         enableEmptySections={true}
         renderSeparator={this._renderSeparatorView}
+        renderHeader={this.renderHeaderContent}
       />
     );
    }
@@ -251,6 +244,27 @@ class Merchants extends React.Component {
         <Image  key={rowData.imgUrl} source={{uri:rowData.imgUrl}} style={{width:70,height:70,margin:5}}/>
     );
   }
+  //渲染ListView的Header布局
+  renderHeaderContent(){
+      return (
+          <View>
+             {this.renderStoreBaisc()}
+             {this.renderCenterBar()}
+             <View style={{height:32,alignItems:'center',flexDirection:'row',backgroundColor:'#f5f5f5'}}>
+                 <Text style={{marginLeft:10}}>评论信息</Text>
+                 <View style={{flex:1,alignItems:'flex-end'}}>
+                      <TouchableOpacity onPress={()=>{this.buttonItemAction(6)}}>
+                            <View style={{flexDirection:'row',height:32,alignItems:'center'}}>
+                                  <Text style={{fontSize:12}}>添加评论</Text>
+                                  <Image source={require('../imgs/ic_center_right_arrow.png')} 
+                                         style={{width:12,height:18,marginRight:15}}/>
+                           </View>
+                      </TouchableOpacity>
+                 </View>     
+            </View>
+          </View>
+      );
+  }
   render() {
     return (
        <View style={{backgroundColor:'#f5f5f5',flex:1}}>
@@ -267,8 +281,6 @@ class Merchants extends React.Component {
                 </View>  
                 <View style={{height:48,width:48}}/>
           </View>
-          {this.renderStoreBaisc()}
-          {this.renderCenterBar()}
           {this.renderBottomComment()}    
       </View>
     );

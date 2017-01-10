@@ -18,12 +18,13 @@ import PureListView from '../component/PureListView';
 import { toastShort } from '../utils/ToastUtil';
 import GoodDetails from './GoodDetails';
 import Merchants from './Merchants';
+import Loading from '../component/Loading_DD';
+import LoadingView from '../component/LoadingView';
+
+import { connect } from 'react-redux';
+import { fetchGoodsAction,changeCategoryAction} from '../actions/GoodsAction'
 
 const {height,width} = Dimensions.get('window');
-
-//默认选中的类别
-let selectedItem = '';
-let itemMap = [];
 
 let defaultColor = '#f5f5f5';  //默认颜色
 let selectedColor = '#fff';  //选中颜色
@@ -38,6 +39,7 @@ class StoreDetails extends Component {
       this.renderItemLeft = this.renderItemLeft.bind(this); 
       this.renderItemRight=this.renderItemRight.bind(this);
       this.collectAction=this.collectAction.bind(this);
+      this.renderBottom=this.renderBottom.bind(this);
       this.state={
          dataSource: new ListView.DataSource({
            getRowData: (dataBlob, sid, rid) => dataBlob[sid][rid],
@@ -45,18 +47,15 @@ class StoreDetails extends Component {
            rowHasChanged: (row1, row2) => row1 !== row2,
            sectionHeaderHasChanged: (s1, s2) => s1 !== s2
          }),
-         RIGHT_ITEMS : formatStore(eval(STORE_DETAILS_DATA).data),
-         DATA_ITEMS : calculateGood(eval(STORE_DETAILS_DATA).data),
-         selectIndexItem : '',
-         
       }
-      itemMap =Object.keys(this.state.RIGHT_ITEMS);  
-      selectedItem=itemMap[0];
-  }
+  }  
 
-  componentDidMount() {
-      this.setState({selectIndexItem:selectedItem});
+  componentWillMount() {
+     const {dispatch} = this.props;
+     //开始加载商品列表数据
+     dispatch(fetchGoodsAction());
   }
+  
     //返回
   buttonBackAction(){
       const {navigator} = this.props;
@@ -84,15 +83,17 @@ class StoreDetails extends Component {
   }
   //点击列表每一项响应按钮
   onPressItemLeft(data){
-      this.setState({selectIndexItem:data});
+      const {goods,dispatch} = this.props;  
+      dispatch(changeCategoryAction(data));
       var distance = 0;
       //开始计算滑动的距离
       //1.首先计算出当前点击了左侧列表的第几项
-      var index = itemMap.indexOf(data) !== -1 ? itemMap.indexOf(data) : 0 ;
+      var index = goods.left_items.indexOf(data);
       //2.根据index索引计算高度
       for ( var i = 0; i <index; i++){
-         distance += 25 + 84 * this.state.RIGHT_ITEMS[itemMap[i]].length;
+         distance += 25 + 84 * goods.right_items[goods.left_items[i]].length;
       }
+      
       this.refs['goodLv'].scrollTo({x:0,y:distance,animated:true});
   }
   //点击右侧列表每一项相应按钮
@@ -108,6 +109,7 @@ class StoreDetails extends Component {
   
   //进行渲染左侧列表数据-商品分类
   renderContentLeft(dataSource) {
+    
     return (
       <ListView
         initialListSize={1}
@@ -123,10 +125,11 @@ class StoreDetails extends Component {
    }
    //渲染右侧商品列表(带有section) 
   renderContentRight(dataSource) {
+    const {goods} = this.props;  
     return (
       <ListView
         ref={'goodLv'}
-        initialListSize={this.state.DATA_ITEMS}
+        initialListSize={goods.data_length}
         dataSource={dataSource}
         renderRow={this.renderItemRight}
         style={{flex:1}}
@@ -146,7 +149,8 @@ class StoreDetails extends Component {
 
   //渲染每一项的数据
   renderItemLeft(data) {
-    if(data === this.state.selectIndexItem){
+    const {goods} = this.props;  
+    if(data === goods.selectedItem){
       return (
           <View style={{backgroundColor:selectedColor}}>
                 <TouchableOpacity onPress={()=>{this.onPressItemLeft(data)}}>
@@ -242,6 +246,10 @@ class StoreDetails extends Component {
                      <Image source={require('../imgs/store/ic_store_default.png')} 
                             style={{width:68,height:68,borderRadius:34}}/>
                      <Text style={{color:'white',fontSize:16,marginLeft:26}}>{route.data.name}</Text>
+                     <View style={{flex:1,alignItems:'flex-end',marginRight:15}}>
+                           <Image source={require('../imgs/ic_center_right_arrow.png')} 
+                                         style={{width:12,height:18}}/>
+                     </View>                    
                 </View>
                 <View style={{flexDirection:'row',justifyContent:'flex-end'}}>
                      <TouchableOpacity style={{flexDirection:'row',marginRight:10,alignItems:'center'}}
@@ -257,30 +265,41 @@ class StoreDetails extends Component {
         </TouchableOpacity>
      );
   }
+
+ renderBottom(){
+    const {goods} = this.props;  
+    if (goods.loading) {
+          return <LoadingView />;
+      }
+    return (
+        <View style={{flexDirection:'row',flex:1}}>
+                <View style={{flex:1}}>
+                    {
+                      this.renderContentLeft(this.state.dataSource.cloneWithRows(
+                         goods.left_items === undefined ? [] : goods.left_items))
+                    }
+                </View>
+               <View style={{flex:3}}>
+                    {this.renderContentRight(this.state.dataSource.cloneWithRowsAndSections(
+                         goods.right_items === undefined ? [] : goods.right_items,goods.left_items))}
+               </View>   
+        </View>  
+    );   
+ }
+
   render() {
-    const {navigator,route} = this.props;  
     return (
        <View style={{flex:1}}>
          <View>
           {this.renderTopLayout()}
           {this.renderStoreBaisc()}
         </View> 
-          <View style={{flexDirection:'row',flex:1}}>
-                <View style={{flex:1}}>
-                    {
-                      this.renderContentLeft(this.state.dataSource.cloneWithRows(
-                         Object.keys(this.state.RIGHT_ITEMS) === undefined ? [] : Object.keys(this.state.RIGHT_ITEMS)))
-                    }
-                </View>
-               <View style={{flex:3}}>
-                    {this.renderContentRight(this.state.dataSource.cloneWithRowsAndSections(
-                         this.state.RIGHT_ITEMS === undefined ? [] : this.state.RIGHT_ITEMS,Object.keys(this.state.RIGHT_ITEMS)))}
-               </View>   
-        </View>  
+        {this.renderBottom()}  
       </View>  
     );
   }
 }
+
 const PARALLAX_HEADER_HEIGHT = 100;
 const STICKY_HEADER_HEIGHT = 45;
 
@@ -303,4 +322,11 @@ const styles = StyleSheet.create({
     borderRadius:5
   }
 });
-export default StoreDetails;
+
+function mapStateToProps(state) {
+  const { goods } = state;
+  return {
+    goods
+  }
+}
+export default connect(mapStateToProps)(StoreDetails);
